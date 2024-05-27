@@ -48,7 +48,7 @@ def extract_semantics(ori_imgs_dir, parsing_dir):
     print(f'[INFO] ===== extracted semantics =====')
 
 
-def extract_landmarks(ori_imgs_dir):
+def extract_landmarks(ori_imgs_dir, report_progress):
 
     print(f'[INFO] ===== extract face landmarks from {ori_imgs_dir} =====')
     try:
@@ -56,6 +56,10 @@ def extract_landmarks(ori_imgs_dir):
     except:
         fa = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False)
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
+
+    steps_count = len(image_paths)
+    i = 1
+
     for image_path in tqdm.tqdm(image_paths):
         input = cv2.imread(image_path, cv2.IMREAD_UNCHANGED) # [H, W, 3]
         input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
@@ -63,6 +67,13 @@ def extract_landmarks(ori_imgs_dir):
         if len(preds) > 0:
             lands = preds[0].reshape(-1, 2)[:,:2]
             np.savetxt(image_path.replace('jpg', 'lms'), lands, '%f')
+
+        report_progress((int(i) / int(steps_count)) * 100)
+        i = i + 1
+
+    if steps_count <= 0:
+        report_progress(100)
+
     del fa
     print(f'[INFO] ===== extracted face landmarks =====')
 
