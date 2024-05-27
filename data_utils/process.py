@@ -67,7 +67,7 @@ def extract_landmarks(ori_imgs_dir):
     print(f'[INFO] ===== extracted face landmarks =====')
 
 
-def extract_background(base_dir, ori_imgs_dir):
+def extract_background(base_dir, ori_imgs_dir, report_progress):
     
     print(f'[INFO] ===== extract background image from {ori_imgs_dir} =====')
 
@@ -83,6 +83,8 @@ def extract_background(base_dir, ori_imgs_dir):
     # nearest neighbors
     all_xys = np.mgrid[0:h, 0:w].reshape(2, -1).transpose()
     distss = []
+    steps_count = len(image_paths)
+    i = 1
     for image_path in tqdm.tqdm(image_paths):
         parse_img = cv2.imread(image_path.replace('ori_imgs', 'parsing').replace('.jpg', '.png'))
         bg = (parse_img[..., 0] == 255) & (parse_img[..., 1] == 255) & (parse_img[..., 2] == 255)
@@ -90,6 +92,11 @@ def extract_background(base_dir, ori_imgs_dir):
         nbrs = NearestNeighbors(n_neighbors=1, algorithm='kd_tree').fit(fg_xys)
         dists, _ = nbrs.kneighbors(all_xys)
         distss.append(dists)
+        report_progress((int(i) / int(steps_count)) * 100)
+        i = i + 1
+
+    if steps_count <= 0:
+        report_progress(100)
 
     distss = np.stack(distss)
     max_dist = np.max(distss, 0)
@@ -124,7 +131,7 @@ def extract_background(base_dir, ori_imgs_dir):
     print(f'[INFO] ===== extracted background image =====')
 
 
-def extract_torso_and_gt(base_dir, ori_imgs_dir):
+def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress):
 
     print(f'[INFO] ===== extract torso and gt images for {base_dir} =====')
 
@@ -134,6 +141,9 @@ def extract_torso_and_gt(base_dir, ori_imgs_dir):
     bg_image = cv2.imread(os.path.join(base_dir, 'bc.jpg'), cv2.IMREAD_UNCHANGED)
     
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
+
+    i = 1
+    steps_count = len(image_paths)
 
     for image_path in tqdm.tqdm(image_paths):
         # read ori image
@@ -240,6 +250,13 @@ def extract_torso_and_gt(base_dir, ori_imgs_dir):
         torso_alpha[~mask] = 0
 
         cv2.imwrite(image_path.replace('ori_imgs', 'torso_imgs').replace('.jpg', '.png'), np.concatenate([torso_image, torso_alpha], axis=-1))
+
+        report_progress((int(i) / int(steps_count)) * 100)
+        i = i + 1
+
+    if steps_count <= 0:
+        report_progress(100)
+
     print(f'[INFO] ===== extracted torso and gt images =====')
 
 
