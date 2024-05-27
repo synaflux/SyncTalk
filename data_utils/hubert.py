@@ -3,9 +3,9 @@ import soundfile as sf
 import numpy as np
 import torch
 
-print("[1/9] Loading the Wav2Vec2 Processor...")
+print("Loading the Wav2Vec2 Processor...")
 wav2vec2_processor = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960-ft")
-print("[2/9] Loading the HuBERT Model...")
+print("Loading the HuBERT Model...")
 hubert_model = HubertModel.from_pretrained("facebook/hubert-large-ls960-ft")
 
 
@@ -45,6 +45,7 @@ def get_hubert_from_16k_speech(speech, device="cuda:0"):
         input_values = input_values_all[:, start_idx: end_idx]
         hidden_states = hubert_model.forward(input_values).last_hidden_state # [B=1, T=pts//320, hid=1024]
         res_lst.append(hidden_states[0])
+        print(f'[{i + 1}/{num_iter}] get_hubert_from_16k_speech progress')
     if num_iter > 0:
         input_values = input_values_all[:, clip_length * num_iter:]
     else:
@@ -81,17 +82,12 @@ args = parser.parse_args()
 
 wav_name = args.wav
 
-print('[3/9]')
 speech, sr = sf.read(wav_name)
-print('[4/9]')
 speech_16k = librosa.resample(speech, orig_sr=sr, target_sr=16000)
-print("[5/9] SR: {} to {}".format(sr, 16000))
+print("SR: {} to {}".format(sr, 16000))
 # print(speech.shape, speech_16k.shape)
 
-print('[6/9]')
 hubert_hidden = get_hubert_from_16k_speech(speech_16k)
-print('[7/9]')
 hubert_hidden = make_even_first_dim(hubert_hidden).reshape(-1, 2, 1024)
-print('[8/9]')
 np.save(wav_name.replace('.wav', '_hu.npy'), hubert_hidden.detach().numpy())
-print(f'[8/9] {hubert_hidden.detach().numpy().shape}')
+print(hubert_hidden.detach().numpy().shape)
