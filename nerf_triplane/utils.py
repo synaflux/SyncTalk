@@ -807,11 +807,11 @@ class Trainer(object):
         if not self.opt.torso:
             outputs = self.model.render(rays_o, rays_d, auds, bg_coords, poses, eye=eye, index=index, staged=False,
                                         bg_color=bg_color, perturb=True, force_all_rays=False if (
-                            self.opt.patch_size <= 1 and not self.opt.train_camera) else True, **vars(self.opt))
+                        self.opt.patch_size <= 1 and not self.opt.train_camera) else True, **vars(self.opt))
         else:
             outputs = self.model.render_torso(rays_o, rays_d, auds, bg_coords, poses, eye=eye, index=index,
                                               staged=False, bg_color=bg_color, perturb=True, force_all_rays=False if (
-                            self.opt.patch_size <= 1 and not self.opt.train_camera) else True, **vars(self.opt))
+                        self.opt.patch_size <= 1 and not self.opt.train_camera) else True, **vars(self.opt))
 
         if not self.opt.torso:
             pred_rgb = outputs['image']
