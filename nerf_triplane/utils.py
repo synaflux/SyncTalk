@@ -557,6 +557,7 @@ class LMDMeter:
                 break
 
         else:
+            print(img)
             lms = self.predictor.get_landmarks(img)[-1]
         
         # self.vis_landmarks(img, lms)
