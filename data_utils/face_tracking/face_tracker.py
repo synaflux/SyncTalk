@@ -64,7 +64,7 @@ arg_landis = 1e5
 
 i = 1
 range_value = range(500, 1500, 50) 
-steps_count = steps = len(list(range_value))
+steps_count = len(list(range_value))
 
 for focal in range_value:
     id_para = lms.new_zeros((1, id_dim), requires_grad=True)

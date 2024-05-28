@@ -48,7 +48,7 @@ def extract_semantics(ori_imgs_dir, parsing_dir):
     print(f'[INFO] ===== extracted semantics =====')
 
 
-def extract_landmarks(ori_imgs_dir, report_progress):
+def extract_landmarks(ori_imgs_dir, report_progress=None):
 
     print(f'[INFO] ===== extract face landmarks from {ori_imgs_dir} =====')
     try:
@@ -68,17 +68,18 @@ def extract_landmarks(ori_imgs_dir, report_progress):
             lands = preds[0].reshape(-1, 2)[:,:2]
             np.savetxt(image_path.replace('jpg', 'lms'), lands, '%f')
 
-        report_progress((int(i) / int(steps_count)) * 100)
+        if report_progress is not None:
+            report_progress(i, steps_count)
         i = i + 1
 
-    if steps_count <= 0:
-        report_progress(100)
+    if report_progress is not None and steps_count <= 0:
+        report_progress(1, 1)
 
     del fa
     print(f'[INFO] ===== extracted face landmarks =====')
 
 
-def extract_background(base_dir, ori_imgs_dir, report_progress):
+def extract_background(base_dir, ori_imgs_dir, report_progress=None):
     
     print(f'[INFO] ===== extract background image from {ori_imgs_dir} =====')
 
@@ -103,11 +104,12 @@ def extract_background(base_dir, ori_imgs_dir, report_progress):
         nbrs = NearestNeighbors(n_neighbors=1, algorithm='kd_tree').fit(fg_xys)
         dists, _ = nbrs.kneighbors(all_xys)
         distss.append(dists)
-        report_progress((int(i) / int(steps_count)) * 100)
+        if report_progress is not None:
+            report_progress(i, steps_count)
         i = i + 1
 
-    if steps_count <= 0:
-        report_progress(100)
+    if report_progress is not None and steps_count <= 0:
+        report_progress(1, 1)
 
     distss = np.stack(distss)
     max_dist = np.max(distss, 0)
@@ -142,7 +144,7 @@ def extract_background(base_dir, ori_imgs_dir, report_progress):
     print(f'[INFO] ===== extracted background image =====')
 
 
-def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress):
+def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress=None):
 
     print(f'[INFO] ===== extract torso and gt images for {base_dir} =====')
 
@@ -262,11 +264,12 @@ def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress):
 
         cv2.imwrite(image_path.replace('ori_imgs', 'torso_imgs').replace('.jpg', '.png'), np.concatenate([torso_image, torso_alpha], axis=-1))
 
-        report_progress((int(i) / int(steps_count)) * 100)
+        if report_progress is not None:
+            report_progress(i, steps_count)
         i = i + 1
 
-    if steps_count <= 0:
-        report_progress(100)
+    if report_progress is not None and steps_count <= 0:
+        report_progress(1/1)
 
     print(f'[INFO] ===== extracted torso and gt images =====')
 
@@ -387,7 +390,7 @@ def extract_blendshape(base_dir):
     os.system(blendshape_cmd)
 
 
-def save_transforms(base_dir, ori_imgs_dir):
+def save_transforms(base_dir, ori_imgs_dir, report_progress=None):
     print(f'[INFO] ===== save transforms =====')
 
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
@@ -415,6 +418,10 @@ def save_transforms(base_dir, ori_imgs_dir):
     train_val_ids = [train_ids, val_ids]
     mean_z = -float(torch.mean(trans[:, 2]).item())
 
+    j = 1
+
+    steps_count = len(train_val_ids[0]) + len(train_val_ids[1])
+    
     for split in range(2):
         transform_dict = dict()
         transform_dict['focal_len'] = float(focal_len[0])
@@ -436,9 +443,16 @@ def save_transforms(base_dir, ori_imgs_dir):
             frame_dict['transform_matrix'] = pose.numpy().tolist()
 
             transform_dict['frames'].append(frame_dict)
+            
+            if report_progress is not None:
+                report_progress(j, steps_count)
+            j = j + 1
 
         with open(os.path.join(base_dir, 'transforms_' + save_id + '.json'), 'w') as fp:
             json.dump(transform_dict, fp, indent=2, separators=(',', ': '))
+
+    if report_progress is not None and steps_count <= 0:
+        report_progress(1, 1)    
 
     print(f'[INFO] ===== finished saving transforms =====')
 
