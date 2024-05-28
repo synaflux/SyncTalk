@@ -1,7 +1,9 @@
-import numpy as np
-import os
-from util import *
 import argparse
+import os
+
+import numpy as np
+
+from util import *
 
 
 def set_requires_grad(tensor_list):
@@ -31,7 +33,7 @@ point_num = track_xys.shape[1]
 pts = torch.zeros((point_num, 3), dtype=torch.float32).cuda()
 set_requires_grad([euler_angle, trans, pts])
 
-cxy = torch.Tensor((args.img_w/2.0, args.img_h/2.0)).float().cuda()
+cxy = torch.Tensor((args.img_w / 2.0, args.img_h / 2.0)).float().cuda()
 
 first_iter_num = 500
 second_iter_num = 8000
@@ -50,9 +52,7 @@ for iter in range(first_iter_num):
     print(f'[{i}/{steps_count}] bundle_adjustment')
     i = i + 1
 
-
 optimizer_ba = torch.optim.Adam([pts, euler_angle, trans], lr=1e-4)
-
 
 for iter in range(second_iter_num):
     proj_pts = forward_transform(pts.unsqueeze(0).expand(

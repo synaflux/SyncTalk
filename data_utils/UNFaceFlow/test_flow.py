@@ -1,7 +1,9 @@
 # ref:https://github.com/ShunyuYao/DFA-NeRF
-import sys
 import os
+import sys
+
 from tqdm import tqdm
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, 'core'))
 from pathlib import Path
@@ -10,7 +12,6 @@ from models.network_test_flow import NeuralNRT
 from options_test_flow import TestOptions
 import torch
 import numpy as np
-
 
 
 def save_flow_numpy(filename, flow_input):
@@ -32,7 +33,7 @@ def predict(data):
         for i in range(B):
             flow_tmp = flow[i].cpu().numpy() * src_mask[i].cpu().numpy()
             save_flow_numpy(os.path.join(save_path, os.path.basename(
-                path_flow[i])[:-6]+".npy"), flow_tmp)
+                path_flow[i])[:-6] + ".npy"), flow_tmp)
 
 
 if __name__ == "__main__":
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     total_length = len(testloader)
 
     i = 1
-    
+
     for batch_idx, data in tqdm(enumerate(testloader), total=total_length):
         predict(data)
         print(f'[{i}/{total_length}] UNFaceFlow test')
