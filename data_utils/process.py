@@ -12,7 +12,7 @@ from face_tracking.util import euler2rot
 
 
 def extract_audio(path, out_path, sample_rate=16000):
-
+    
     print(f'[INFO] ===== extract audio from {path} to {out_path} =====')
     cmd = f'ffmpeg -i {path} -f wav -ar {sample_rate} {out_path}'
     os.system(cmd)
@@ -80,7 +80,7 @@ def extract_landmarks(ori_imgs_dir, report_progress=None):
 
 
 def extract_background(base_dir, ori_imgs_dir, report_progress=None):
-
+    
     print(f'[INFO] ===== extract background image from {ori_imgs_dir} =====')
 
     from sklearn.neighbors import NearestNeighbors
@@ -152,7 +152,7 @@ def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress=None):
 
     # load bg
     bg_image = cv2.imread(os.path.join(base_dir, 'bc.jpg'), cv2.IMREAD_UNCHANGED)
-
+    
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
 
     i = 1
@@ -180,7 +180,7 @@ def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress=None):
         torso_image = gt_image.copy() # rgb
         torso_image[head_part] = bg_image[head_part]
         torso_alpha = 255 * np.ones((gt_image.shape[0], gt_image.shape[1], 1), dtype=np.uint8) # alpha
-
+        
         # torso part "vertical" in-painting...
         L = 8 + 1
         torso_coords = np.stack(np.nonzero(torso_part), axis=-1) # [M, 2]
@@ -193,7 +193,7 @@ def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress=None):
         top_torso_coords = torso_coords[uid] # [m, 2]
         # only keep top-is-head pixels
         top_torso_coords_up = top_torso_coords.copy() - np.array([1, 0])
-        mask = head_part[tuple(top_torso_coords_up.T)]
+        mask = head_part[tuple(top_torso_coords_up.T)] 
         if mask.any():
             top_torso_coords = top_torso_coords[mask]
             # get the color
@@ -225,8 +225,8 @@ def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress=None):
         u, uid, ucnt = np.unique(neck_coords[:, 1], return_index=True, return_counts=True)
         top_neck_coords = neck_coords[uid] # [m, 2]
         top_neck_coords_up = top_neck_coords.copy() - np.array([1, 0])
-        mask = head_part[tuple(top_neck_coords_up.T)]
-
+        mask = head_part[tuple(top_neck_coords_up.T)] 
+        
         top_neck_coords = top_neck_coords[mask]
         offset_down = np.minimum(ucnt[mask] - 1, push_down)
         top_neck_coords += np.stack([offset_down, np.zeros_like(offset_down)], axis=-1)
@@ -279,7 +279,7 @@ def face_tracking(ori_imgs_dir):
     print(f'[INFO] ===== perform face tracking =====')
 
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
-
+    
     # read one image to get H/W
     tmp_image = cv2.imread(image_paths[0], cv2.IMREAD_UNCHANGED) # [H, W, 3]
     h, w = tmp_image.shape[:2]
@@ -394,7 +394,7 @@ def save_transforms(base_dir, ori_imgs_dir, report_progress=None):
     print(f'[INFO] ===== save transforms =====')
 
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
-
+    
     # read one image to get H/W
     tmp_image = cv2.imread(image_paths[0], cv2.IMREAD_UNCHANGED) # [H, W, 3]
     h, w = tmp_image.shape[:2]
@@ -467,7 +467,7 @@ if __name__ == '__main__':
     opt = parser.parse_args()
 
     base_dir = os.path.dirname(opt.path)
-
+    
     wav_path = os.path.join(base_dir, 'aud.wav')
     ori_imgs_dir = os.path.join(base_dir, 'ori_imgs')
     parsing_dir = os.path.join(base_dir, 'parsing')
