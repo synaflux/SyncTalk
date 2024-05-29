@@ -1,12 +1,16 @@
 # ref: https://github.com/ShunyuYao/DFA-NeRF
-import argparse
-import os
-
+from numpy.core.numeric import require
+from numpy.lib.function_base import quantile
+import torch
 import numpy as np
-
-from data_loader import load_dir
 from facemodel import Face_3DMM
+from data_loader import load_dir
 from util import *
+import os
+import sys
+import cv2
+import imageio
+import argparse
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -30,7 +34,7 @@ end_id = args.frame_num
 lms = load_dir(args.path, start_id, end_id)
 num_frames = lms.shape[0]
 h, w = args.img_h, args.img_w
-cxy = torch.tensor((w / 2.0, h / 2.0), dtype=torch.float).cuda()
+cxy = torch.tensor((w/2.0, h/2.0), dtype=torch.float).cuda()
 id_dim, exp_dim, tex_dim, point_num = 100, 79, 100, 34650
 model_3dmm = Face_3DMM(os.path.join(dir_path, '3DMM'),
                        id_dim, exp_dim, tex_dim, point_num)
@@ -86,8 +90,8 @@ for focal in range_value:
             geometry, euler_angle, trans, focal_length, cxy)
         loss_lan = cal_lan_loss(
             proj_geo[:, :, :2], lms[sel_ids, -51:, :].detach())
-        loss_regid = torch.mean(id_para * id_para) * 8
-        loss_regexp = torch.mean(exp_para * exp_para) * 0.5
+        loss_regid = torch.mean(id_para*id_para)*8
+        loss_regexp = torch.mean(exp_para*exp_para)*0.5
         loss = loss_lan + loss_regid + loss_regexp
         optimizer_id.zero_grad()
         optimizer_exp.zero_grad()
@@ -131,8 +135,8 @@ for iter in range(iter_num):
         geometry, euler_angle, trans, focal_length, cxy)
     loss_lan = cal_lan_loss(
         proj_geo[:, :, :2], lms[sel_ids, -51:, :].detach())
-    loss_regid = torch.mean(id_para * id_para) * 8
-    loss_regexp = torch.mean(exp_para * exp_para) * 0.5
+    loss_regid = torch.mean(id_para*id_para)*8
+    loss_regexp = torch.mean(exp_para*exp_para)*0.5
     loss = loss_lan + loss_regid + loss_regexp
     optimizer_id.zero_grad()
     optimizer_exp.zero_grad()
@@ -143,6 +147,7 @@ for iter in range(iter_num):
         optimizer_exp.step()
     optimizer_frame.step()
 print(arg_focal, loss_lan.item(), torch.mean(trans[:, 2]).item())
+
 
 torch.save({'id': id_para.detach().cpu(), 'exp': exp_para.detach().cpu(),
             'euler': euler_angle.detach().cpu(), 'trans': trans.detach().cpu(),

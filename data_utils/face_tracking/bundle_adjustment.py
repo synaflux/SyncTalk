@@ -1,9 +1,7 @@
-import argparse
-import os
-
 import numpy as np
-
+import os
 from util import *
+import argparse
 
 
 def set_requires_grad(tensor_list):
@@ -33,7 +31,9 @@ point_num = track_xys.shape[1]
 pts = torch.zeros((point_num, 3), dtype=torch.float32).cuda()
 set_requires_grad([euler_angle, trans, pts])
 
-cxy = torch.Tensor((args.img_w / 2.0, args.img_h / 2.0)).float().cuda()
+cxy = torch.Tensor((args.img_w/2.0, args.img_h/2.0)).float().cuda()
+
+optimizer_pts = torch.optim.Adam([pts], lr=1e-2)
 
 first_iter_num = 500
 second_iter_num = 8000
@@ -41,7 +41,6 @@ second_iter_num = 8000
 i = 1
 steps_count = first_iter_num + second_iter_num
 
-optimizer_pts = torch.optim.Adam([pts], lr=1e-2)
 for iter in range(first_iter_num):
     proj_pts = forward_transform(pts.unsqueeze(0).expand(
         num_frames, -1, -1), euler_angle, trans, focal_len, cxy)

@@ -1,19 +1,19 @@
 #!/usr/bin/python
 # -*- encoding: utf-8 -*-
-import os
-import os.path as osp
-from pathlib import Path
-
-import configargparse
-import cv2
 import numpy as np
-import torch
-import torchvision.transforms as transforms
-import tqdm
-from PIL import Image
-
 from model import BiSeNet
 
+import torch
+
+import os
+import os.path as osp
+
+from PIL import Image
+import torchvision.transforms as transforms
+import cv2
+from pathlib import Path
+import configargparse
+import tqdm
 
 # import ttach as tta
 
@@ -40,12 +40,12 @@ def vis_parsing_maps(im, parsing_anno, stride, save_im=False, save_path='vis_res
     for pi in range(16, 17):
         index = np.where(vis_parsing_anno == pi)
         vis_parsing_anno_color[index[0], index[1], :] = np.array([0, 0, 255])
-    for pi in range(17, num_of_class + 1):
+    for pi in range(17, num_of_class+1):
         index = np.where(vis_parsing_anno == pi)
         vis_parsing_anno_color[index[0], index[1], :] = np.array([255, 0, 0])
 
     vis_parsing_anno_color = vis_parsing_anno_color.astype(np.uint8)
-    index = np.where(vis_parsing_anno == num_of_class - 1)
+    index = np.where(vis_parsing_anno == num_of_class-1)
     vis_im = cv2.resize(vis_parsing_anno_color, img_size,
                         interpolation=cv2.INTER_NEAREST)
     if save_im:
@@ -59,8 +59,7 @@ def vis_parsing_maps(im, parsing_anno, stride, save_im=False, save_path='vis_res
         vis_parsing_anno_color_face[index[0], index[1], :] = np.array([255, 0, 0])
     pad = 5
     vis_parsing_anno_color_face = vis_parsing_anno_color_face.astype(np.uint8)
-    face_part = (vis_parsing_anno_color_face[..., 0] == 255) & (vis_parsing_anno_color_face[..., 1] == 0) & (
-                vis_parsing_anno_color_face[..., 2] == 0)
+    face_part = (vis_parsing_anno_color_face[..., 0] == 255) & (vis_parsing_anno_color_face[..., 1] == 0) & (vis_parsing_anno_color_face[..., 2] == 0)
     face_coords = np.stack(np.nonzero(face_part), axis=-1)
     sorted_inds = np.lexsort((-face_coords[:, 0], face_coords[:, 1]))
     sorted_face_coords = face_coords[sorted_inds]
@@ -104,6 +103,7 @@ def vis_parsing_maps(im, parsing_anno, stride, save_im=False, save_path='vis_res
 
 
 def evaluate(respth='./res/test_res', dspth='./data', cp='model_final_diss.pth'):
+
     Path(respth).mkdir(parents=True, exist_ok=True)
 
     print(f'[INFO] loading model...')
@@ -132,14 +132,13 @@ def evaluate(respth='./res/test_res', dspth='./data', cp='model_final_diss.pth')
                 img = to_tensor(image)
 
                 # test-time augmentation.
-                inputs = torch.unsqueeze(img, 0)  # [1, 3, 512, 512]
+                inputs = torch.unsqueeze(img, 0) # [1, 3, 512, 512]
                 outputs = net(inputs.cuda())
                 parsing = outputs.mean(0).cpu().numpy().argmax(0)
                 image_path = int(image_path[:-4])
                 image_path = str(image_path) + '.png'
 
-                vis_parsing_maps(image, parsing, stride=1, save_im=True, save_path=osp.join(respth, image_path),
-                                 img_size=ori_size)
+                vis_parsing_maps(image, parsing, stride=1, save_im=True, save_path=osp.join(respth, image_path), img_size=ori_size)
             print(f'[{i}/{steps_count}] [face_parsing] evaluate progress')
             i = i + 1
 
