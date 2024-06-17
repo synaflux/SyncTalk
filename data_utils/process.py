@@ -488,6 +488,8 @@ if __name__ == '__main__':
     # extract audio
     if opt.task == -1 or opt.task == 1:
         extract_audio(opt.path, wav_path)
+        
+    if opt.task == -1 or opt.task == 1.5:
         extract_audio_features(wav_path, mode=opt.asr)
 
     # extract images
