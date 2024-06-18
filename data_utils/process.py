@@ -48,7 +48,7 @@ def extract_semantics(ori_imgs_dir, parsing_dir):
     print(f'[INFO] ===== extracted semantics =====')
 
 
-def extract_landmarks(ori_imgs_dir, report_progress=None):
+def extract_landmarks(ori_imgs_dir):
 
     print(f'[INFO] ===== extract face landmarks from {ori_imgs_dir} =====')
     try:
@@ -56,9 +56,6 @@ def extract_landmarks(ori_imgs_dir, report_progress=None):
     except:
         fa = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False)
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
-
-    steps_count = len(image_paths)
-    i = 1
 
     for image_path in tqdm.tqdm(image_paths):
         input = cv2.imread(image_path, cv2.IMREAD_UNCHANGED) # [H, W, 3]
@@ -68,18 +65,11 @@ def extract_landmarks(ori_imgs_dir, report_progress=None):
             lands = preds[0].reshape(-1, 2)[:,:2]
             np.savetxt(image_path.replace('jpg', 'lms'), lands, '%f')
 
-        if report_progress is not None:
-            report_progress(i, steps_count)
-        i = i + 1
-
-    if report_progress is not None and steps_count <= 0:
-        report_progress(1, 1)
-
     del fa
     print(f'[INFO] ===== extracted face landmarks =====')
 
 
-def extract_background(base_dir, ori_imgs_dir, report_progress=None):
+def extract_background(base_dir, ori_imgs_dir):
     
     print(f'[INFO] ===== extract background image from {ori_imgs_dir} =====')
 
@@ -96,7 +86,6 @@ def extract_background(base_dir, ori_imgs_dir, report_progress=None):
     all_xys = np.mgrid[0:h, 0:w].reshape(2, -1).transpose()
     distss = []
     steps_count = len(image_paths)
-    i = 1
     for image_path in tqdm.tqdm(image_paths):
         parse_img = cv2.imread(image_path.replace('ori_imgs', 'parsing').replace('.jpg', '.png'))
         bg = (parse_img[..., 0] == 255) & (parse_img[..., 1] == 255) & (parse_img[..., 2] == 255)
@@ -104,12 +93,6 @@ def extract_background(base_dir, ori_imgs_dir, report_progress=None):
         nbrs = NearestNeighbors(n_neighbors=1, algorithm='kd_tree').fit(fg_xys)
         dists, _ = nbrs.kneighbors(all_xys)
         distss.append(dists)
-        if report_progress is not None:
-            report_progress(i, steps_count)
-        i = i + 1
-
-    if report_progress is not None and steps_count <= 0:
-        report_progress(1, 1)
 
     distss = np.stack(distss)
     max_dist = np.max(distss, 0)
@@ -144,7 +127,7 @@ def extract_background(base_dir, ori_imgs_dir, report_progress=None):
     print(f'[INFO] ===== extracted background image =====')
 
 
-def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress=None):
+def extract_torso_and_gt(base_dir, ori_imgs_dir):
 
     print(f'[INFO] ===== extract torso and gt images for {base_dir} =====')
 
@@ -154,9 +137,6 @@ def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress=None):
     bg_image = cv2.imread(os.path.join(base_dir, 'bc.jpg'), cv2.IMREAD_UNCHANGED)
     
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
-
-    i = 1
-    steps_count = len(image_paths)
 
     for image_path in tqdm.tqdm(image_paths):
         # read ori image
@@ -263,13 +243,6 @@ def extract_torso_and_gt(base_dir, ori_imgs_dir, report_progress=None):
         torso_alpha[~mask] = 0
 
         cv2.imwrite(image_path.replace('ori_imgs', 'torso_imgs').replace('.jpg', '.png'), np.concatenate([torso_image, torso_alpha], axis=-1))
-
-        if report_progress is not None:
-            report_progress(i, steps_count)
-        i = i + 1
-
-    if report_progress is not None and steps_count <= 0:
-        report_progress(1 / 1)
 
     print(f'[INFO] ===== extracted torso and gt images =====')
 
@@ -390,7 +363,7 @@ def extract_blendshape(base_dir):
     os.system(blendshape_cmd)
 
 
-def save_transforms(base_dir, ori_imgs_dir, report_progress=None):
+def save_transforms(base_dir, ori_imgs_dir):
     print(f'[INFO] ===== save transforms =====')
 
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
@@ -444,15 +417,8 @@ def save_transforms(base_dir, ori_imgs_dir, report_progress=None):
 
             transform_dict['frames'].append(frame_dict)
 
-            if report_progress is not None:
-                report_progress(j, steps_count)
-            j = j + 1
-
         with open(os.path.join(base_dir, 'transforms_' + save_id + '.json'), 'w') as fp:
             json.dump(transform_dict, fp, indent=2, separators=(',', ': '))
-
-    if report_progress is not None and steps_count <= 0:
-        report_progress(1, 1)
 
     print(f'[INFO] ===== finished saving transforms =====')
 
@@ -489,7 +455,7 @@ if __name__ == '__main__':
     if opt.task == -1 or opt.task == 1:
         extract_audio(opt.path, wav_path)
         
-    if opt.task == -1 or opt.task == 1.5:
+    if opt.task == -1 or opt.task == 11:
         extract_audio_features(wav_path, mode=opt.asr)
 
     # extract images
