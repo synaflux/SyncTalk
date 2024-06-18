@@ -259,9 +259,7 @@ def face_tracking(ori_imgs_dir):
 
     print(f'[INFO] ===== finished face tracking =====')
 
-# ref: https://github.com/ShunyuYao/DFA-NeRF
-def extract_flow(base_dir,ori_imgs_dir,mask_dir, flow_dir):
-    print(f'[INFO] ===== extract flow =====')
+def test_flow(base_dir,ori_imgs_dir,mask_dir, flow_dir):
     torch.cuda.empty_cache()
     ref_id = 2
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
@@ -283,6 +281,23 @@ def extract_flow(base_dir,ori_imgs_dir,mask_dir, flow_dir):
         '--savepath=' + base_dir + '/flow_result' + \
         ' --width=' + str(w) + ' --height=' + str(h)
     os.system(ext_flow_cmd)
+
+# ref: https://github.com/ShunyuYao/DFA-NeRF
+def extract_flow(base_dir,ori_imgs_dir,mask_dir, flow_dir):
+    print(f'[INFO] ===== extract flow =====')
+
+    torch.cuda.empty_cache()
+    ref_id = 2
+    image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
+    tmp_image = cv2.imread(image_paths[0], cv2.IMREAD_UNCHANGED)  # [H, W, 3]
+    h, w = tmp_image.shape[:2]
+
+    valid_img_ids = []
+    for i in range(100000):
+        if os.path.isfile(os.path.join(ori_imgs_dir, '{:d}.lms'.format(i))):
+            valid_img_ids.append(i)
+    valid_img_num = len(valid_img_ids)
+
     face_img = cv2.imread(os.path.join(ori_imgs_dir, '{:d}.jpg'.format(ref_id)))
     face_img_mask = cv2.imread(os.path.join(mask_dir, '{:d}.png'.format(ref_id)))
 
@@ -387,6 +402,10 @@ def save_transforms(base_dir, ori_imgs_dir):
     train_val_ids = [train_ids, val_ids]
     mean_z = -float(torch.mean(trans[:, 2]).item())
 
+    j = 1
+
+    steps_count = len(train_val_ids[0]) + len(train_val_ids[1])
+    
     for split in range(2):
         transform_dict = dict()
         transform_dict['focal_len'] = float(focal_len[0])
@@ -408,6 +427,10 @@ def save_transforms(base_dir, ori_imgs_dir):
             frame_dict['transform_matrix'] = pose.numpy().tolist()
 
             transform_dict['frames'].append(frame_dict)
+
+            print(f'[{j}/{steps_count}] save transforms')
+            
+            j = j + 1
 
         with open(os.path.join(base_dir, 'transforms_' + save_id + '.json'), 'w') as fp:
             json.dump(transform_dict, fp, indent=2, separators=(',', ': '))
@@ -473,6 +496,10 @@ if __name__ == '__main__':
     # face tracking
     if opt.task == -1 or opt.task == 7:
         face_tracking(ori_imgs_dir)
+
+    # test flow
+    if opt.task == -1 or opt.task == 12:
+        test_flow(base_dir, ori_imgs_dir, mask_imgs_dir, flow_dir)
 
     # extract flow & pose optimization
     if opt.task == -1 or opt.task == 8:
