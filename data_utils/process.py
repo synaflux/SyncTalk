@@ -259,7 +259,7 @@ def face_tracking(ori_imgs_dir):
 
     print(f'[INFO] ===== finished face tracking =====')
 
-def test_flow(base_dir,ori_imgs_dir,mask_dir, flow_dir):
+def test_flow(base_dir,ori_imgs_dir):
     torch.cuda.empty_cache()
     ref_id = 2
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
@@ -499,7 +499,7 @@ if __name__ == '__main__':
 
     # test flow
     if opt.task == -1 or opt.task == 12:
-        test_flow(base_dir, ori_imgs_dir, mask_imgs_dir, flow_dir)
+        test_flow(base_dir, ori_imgs_dir)
 
     # extract flow & pose optimization
     if opt.task == -1 or opt.task == 8:
