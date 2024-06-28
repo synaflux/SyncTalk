@@ -191,36 +191,30 @@ class NeRFDataset:
             # cross-driven extracted features. 
             else:
                 if self.opt.asr_model == 'ave':
-                    try:
-                        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-                        model = AudioEncoder().to(device).eval()
-                        ckpt = torch.load('./nerf_triplane/checkpoints/audio_visual_encoder.pth')
-                        model.load_state_dict({f'audio_encoder.{k}': v for k, v in ckpt.items()})
-                        dataset = AudDataset(self.opt.aud)
-                        data_loader = DataLoader(dataset, batch_size=64, shuffle=False)
-                        outputs = []
-                        for mel in data_loader:
-                            mel = mel.to(device)
-                            with torch.no_grad():
-                                out = model(mel)
-                            outputs.append(out)
-                        outputs = torch.cat(outputs, dim=0).cpu()
-                        first_frame, last_frame = outputs[:1], outputs[-1:]
-                        aud_features = torch.cat([first_frame.repeat(2, 1), outputs, last_frame.repeat(2, 1)], dim=0).numpy()
-                    except:
-                        print(f'[ERROR] If do not use Audio Visual Encoder, replace it with the npy file path.')
+                    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                    model = AudioEncoder().to(device).eval()
+                    ckpt = torch.load('./nerf_triplane/checkpoints/audio_visual_encoder.pth')
+                    model.load_state_dict({f'audio_encoder.{k}': v for k, v in ckpt.items()})
+                    dataset = AudDataset(self.opt.aud)
+                    data_loader = DataLoader(dataset, batch_size=64, shuffle=False)
+                    outputs = []
+                    for mel in data_loader:
+                        mel = mel.to(device)
+                        with torch.no_grad():
+                            out = model(mel)
+                        outputs.append(out)
+                    outputs = torch.cat(outputs, dim=0).cpu()
+                    first_frame, last_frame = outputs[:1], outputs[-1:]
+                    aud_features = torch.cat([first_frame.repeat(2, 1), outputs, last_frame.repeat(2, 1)], dim=0).numpy()
                 else:
-                    try:
-                        # aud_features = np.load(self.opt.aud)
-                        if 'deepspeech' in self.opt.asr_model:
-                            aud_features_file = self.opt.aud.split('.')[0]+'_ds.npy'
-                        elif 'hubert' in self.opt.asr_model:
-                            aud_features_file = self.opt.aud.split('.')[0]+'_hu.npy'
-                        else:
-                            raise Exception("Invalid asr_model")
-                        aud_features = np.load(aud_features_file)
-                    except:
-                        print(f'[ERROR] If do not use Audio Visual Encoder, replace it with the npy file path.')
+                    # aud_features = np.load(self.opt.aud)
+                    if 'deepspeech' in self.opt.asr_model:
+                        aud_features_file = self.opt.aud.split('.')[0]+'_ds.npy'
+                    elif 'hubert' in self.opt.asr_model:
+                        aud_features_file = self.opt.aud.split('.')[0]+'_hu.npy'
+                    else:
+                        raise Exception("Invalid asr_model")
+                    aud_features = np.load(aud_features_file)
 
             if self.opt.asr_model == 'ave':
                 aud_features = torch.from_numpy(aud_features).unsqueeze(0)
