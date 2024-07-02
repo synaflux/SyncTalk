@@ -10,12 +10,18 @@ import torch.nn.functional as F
 import face_alignment
 from face_tracking.util import euler2rot
 
+def validate_exit_code(exit_code: int, cmd: str):
+    if exit_code != 0:
+        raise Exception(f'{cmd} failed with code: {exit_code}')
+
+def run_cmd(cmd: str):
+    validate_exit_code(os.system(cmd), cmd)
 
 def extract_audio(path, out_path, sample_rate=16000):
     
     print(f'[INFO] ===== extract audio from {path} to {out_path} =====')
     cmd = f'ffmpeg -i {path} -f wav -ar {sample_rate} {out_path}'
-    os.system(cmd)
+    run_cmd(cmd)
     print(f'[INFO] ===== extracted audio =====')
 
 def extract_audio_features(path, mode='ave'):
@@ -25,10 +31,10 @@ def extract_audio_features(path, mode='ave'):
         print(f'AVE has been integrated into the training code, no need to extract audio features')
     elif mode == "deepspeech": # deepspeech
         cmd = f'python data_utils/deepspeech_features/extract_ds_features.py --input {path}'
-        os.system(cmd)
+        run_cmd(cmd)
     elif mode == 'hubert':
         cmd = f'python data_utils/hubert.py --wav {path}' # save to data/<name>_hu.npy
-        os.system(cmd)
+        run_cmd(cmd)
     print(f'[INFO] ===== extracted audio labels =====')
 
 
@@ -36,7 +42,7 @@ def extract_images(path, out_path, fps=25):
 
     print(f'[INFO] ===== extract images from {path} to {out_path} =====')
     cmd = f'ffmpeg -i {path} -vf fps={fps} -qmin 1 -q:v 1 -start_number 0 {os.path.join(out_path, "%d.jpg")}'
-    os.system(cmd)
+    run_cmd(cmd)
     print(f'[INFO] ===== extracted images =====')
 
 
@@ -44,7 +50,7 @@ def extract_semantics(ori_imgs_dir, parsing_dir):
 
     print(f'[INFO] ===== extract semantics from {ori_imgs_dir} to {parsing_dir} =====')
     cmd = f'python data_utils/face_parsing/test.py --respath={parsing_dir} --imgpath={ori_imgs_dir}'
-    os.system(cmd)
+    run_cmd(cmd)
     print(f'[INFO] ===== extracted semantics =====')
 
 
@@ -255,7 +261,7 @@ def face_tracking(ori_imgs_dir):
 
     cmd = f'python data_utils/face_tracking/face_tracker.py --path={ori_imgs_dir} --img_h={h} --img_w={w} --frame_num={len(image_paths)}'
 
-    os.system(cmd)
+    run_cmd(cmd)
 
     print(f'[INFO] ===== finished face tracking =====')
 
@@ -280,7 +286,7 @@ def test_flow(base_dir,ori_imgs_dir):
     ext_flow_cmd = 'python data_utils/UNFaceFlow/test_flow.py --datapath=' + base_dir + '/flow_list.txt ' + \
         '--savepath=' + base_dir + '/flow_result' + \
         ' --width=' + str(w) + ' --height=' + str(h)
-    os.system(ext_flow_cmd)
+    run_cmd(ext_flow_cmd)
 
 # ref: https://github.com/ShunyuYao/DFA-NeRF
 def extract_flow(base_dir,ori_imgs_dir,mask_dir, flow_dir):
@@ -366,12 +372,12 @@ def extract_flow(base_dir,ori_imgs_dir,mask_dir, flow_dir):
 
     pose_opt_cmd = 'python data_utils/face_tracking/bundle_adjustment.py --path=' + base_dir + ' --img_h=' + \
         str(h) + ' --img_w=' + str(w)
-    os.system(pose_opt_cmd)
+    run_cmd(pose_opt_cmd)
 
 def extract_blendshape(base_dir):
     print(f'[INFO] ===== extract blendshape =====')
     blendshape_cmd = 'python data_utils/blendshape_capture/main.py --path=' + base_dir
-    os.system(blendshape_cmd)
+    run_cmd(blendshape_cmd)
 
 
 def save_transforms(base_dir, ori_imgs_dir):
