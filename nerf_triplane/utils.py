@@ -1431,7 +1431,8 @@ class Trainer(object):
                     os.makedirs(os.path.dirname(validation_videos_path), exist_ok=True)
                     video_path = os.path.join(validation_videos_path, f'{name}.mp4')
 
-                    os.system(f'ffmpeg -framerate 24 -i {rgb_file_path} {video_path} -y')
+                    os.system(f"ffmpeg -framerate 24 -i {rgb_file_path} {video_path} -y")
+                    self.log(f"[INFO] saved validation result to {video_path}")
 
 
         average_loss = total_loss / self.local_step
