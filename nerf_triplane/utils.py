@@ -1426,6 +1426,13 @@ class Trainer(object):
                     pbar.set_description(f"loss={loss_val:.4f} ({total_loss/self.local_step:.4f})")
                     pbar.update(loader.batch_size)
 
+                    rgb_file_path = os.path.join(self.workspace, 'validation', f'{name}__%04d_rgb.png')
+                    validation_videos_path = os.path.join(self.workspace, 'validation_videos')
+                    os.makedirs(os.path.dirname(validation_videos_path), exist_ok=True)
+                    video_path = os.path.join(validation_videos_path, f'{name}.mp4')
+
+                    os.system(f'ffmpeg -framerate 24 -i {rgb_file_path} {video_path} -y')
+
 
         average_loss = total_loss / self.local_step
         self.stats["valid_loss"].append(average_loss)
