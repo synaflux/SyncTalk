@@ -1431,7 +1431,7 @@ class Trainer(object):
         os.makedirs(validation_videos_path, exist_ok=True)
         video_path = os.path.join(validation_videos_path, f'{name}.mp4')
 
-        cmd = f"ffmpeg -framerate 24 -i {rgb_file_path} {video_path} -y"
+        cmd = f"ffmpeg -framerate 25 -i {rgb_file_path} {video_path} -y"
         os.system(cmd)
         self.log(f"[INFO] saved result to {video_path}")
 
