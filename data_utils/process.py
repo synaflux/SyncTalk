@@ -20,7 +20,7 @@ def run_cmd(cmd: str):
 def extract_audio(path, out_path, sample_rate=16000):
     
     print(f'[INFO] ===== extract audio from {path} to {out_path} =====')
-    cmd = f'ffmpeg -i {path} -f wav -ar {sample_rate} {out_path}'
+    cmd = f'ffmpeg -i {path} -f wav -ar {sample_rate} {out_path} -y'
     run_cmd(cmd)
     print(f'[INFO] ===== extracted audio =====')
 
