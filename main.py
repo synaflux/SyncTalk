@@ -118,6 +118,8 @@ if __name__ == '__main__':
     parser.add_argument('-m', type=int, default=50)
     parser.add_argument('-r', type=int, default=10)
 
+    parser.add_argument('--source_video', type=str, default='', help="source video path")
+
     parser.add_argument('--output_name', type=str)
 
     opt = parser.parse_args()
@@ -217,7 +219,7 @@ if __name__ == '__main__':
 
             ### evaluate metrics (slow)
             if test_loader.has_gt:
-                trainer.evaluate(test_loader)
+                trainer.evaluate(test_loader, opt.source_video)
 
 
 
@@ -255,7 +257,7 @@ if __name__ == '__main__':
 
             max_epochs = np.ceil(opt.iters / len(train_loader)).astype(np.int32)
             trainer.log(f'[INFO] max_epoch = {max_epochs}')
-            trainer.train(train_loader, valid_loader, max_epochs)
+            trainer.train(train_loader, valid_loader, max_epochs, opt.source_video)
 
             # free some mem
             del train_loader, valid_loader
@@ -265,6 +267,6 @@ if __name__ == '__main__':
             test_loader = NeRFDataset(opt, device=device, type='test').dataloader()
             
             if test_loader.has_gt:
-                trainer.evaluate(test_loader) # blender has gt, so evaluate it.
+                trainer.evaluate(test_loader, opt.source_video) # blender has gt, so evaluate it.
 
             trainer.test(test_loader)
