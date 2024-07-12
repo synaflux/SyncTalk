@@ -219,7 +219,7 @@ if __name__ == '__main__':
 
             ### evaluate metrics (slow)
             if test_loader.has_gt:
-                trainer.evaluate(test_loader, opt.source_video)
+                trainer.evaluate(test_loader, None, opt.source_video)
 
 
 
@@ -267,6 +267,6 @@ if __name__ == '__main__':
             test_loader = NeRFDataset(opt, device=device, type='test').dataloader()
             
             if test_loader.has_gt:
-                trainer.evaluate(test_loader, opt.source_video) # blender has gt, so evaluate it.
+                trainer.evaluate(test_loader, None, opt.source_video) # blender has gt, so evaluate it.
 
             trainer.test(test_loader)
