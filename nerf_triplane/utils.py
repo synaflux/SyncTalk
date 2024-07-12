@@ -1012,7 +1012,7 @@ class Trainer(object):
 
     ### ------------------------------
 
-    def train(self, train_loader, valid_loader, max_epochs):
+    def train(self, train_loader, valid_loader, max_epochs, source_video=None):
         if self.use_tensorboardX and self.local_rank == 0:
             self.writer = tensorboardX.SummaryWriter(os.path.join(self.workspace, "run", self.name))
 
@@ -1029,7 +1029,7 @@ class Trainer(object):
                 self.save_checkpoint(full=True, best=False)
 
             if self.epoch % self.eval_interval == 0:
-                self.evaluate_one_epoch(valid_loader)
+                self.evaluate_one_epoch(valid_loader, None, source_video)
                 self.save_checkpoint(full=False, best=True)
 
         if self.use_tensorboardX and self.local_rank == 0:
