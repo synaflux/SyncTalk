@@ -30,7 +30,7 @@ def smooth_camera_path(poses, kernel_size=5):
 
     N = poses.shape[0]
     K = kernel_size // 2
-    
+
     trans = poses[:, :3, 3].copy() # [N, 3]
     rots = poses[:, :3, :3].copy() # [N, 3, 3]
 
@@ -101,7 +101,7 @@ class NeRFDataset:
         self.num_rays = self.opt.num_rays if self.training else -1
 
         # load nerf-compatible format data.
-        
+
         # load all splits (train/valid/test)
         if type == 'all':
             transform_paths = glob.glob(os.path.join(self.root_path, '*.json'))
@@ -134,7 +134,7 @@ class NeRFDataset:
         else:
             self.H = int(transform['cy']) * 2 // downscale
             self.W = int(transform['cx']) * 2 // downscale
-        
+
         # read images
         frames = transform["frames"]
 
@@ -188,7 +188,7 @@ class NeRFDataset:
                     # aud_features = np.load(os.path.join(self.root_path, 'aud_ave.npy'))
                 else:
                     aud_features = np.load(os.path.join(self.root_path, 'aud.npy'))
-            # cross-driven extracted features. 
+            # cross-driven extracted features.
             else:
                 if self.opt.asr_model == 'ave':
                     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -252,7 +252,7 @@ class NeRFDataset:
         if self.opt.au45:
             import pandas as pd
             au_blink_info = pd.read_csv(os.path.join(self.root_path, 'au.csv'))
-            bs = au_blink_info[' AU45_r'].values
+            bs = au_blink_info['AU45_r'].values
         else:
             bs = np.load(os.path.join(self.root_path, 'bs.npy'))
             if self.opt.bs_area == "upper":
@@ -287,7 +287,7 @@ class NeRFDataset:
             if not os.path.exists(f_path):
                 print('[WARN]', f_path, 'NOT FOUND!')
                 continue
-            
+
             pose = np.array(f['transform_matrix'], dtype=np.float32) # [4, 4]
             pose = nerf_matrix_to_ngp(pose, scale=self.scale, offset=self.offset)
             self.poses.append(pose)
@@ -327,7 +327,7 @@ class NeRFDataset:
                     self.face_mask_imgs.append(face_mask_path)
 
             # load frame-wise bg
-        
+
             torso_img_path = os.path.join(self.root_path, 'torso_imgs', str(f['img_id']) + '.png')
 
             if self.preload > 0:
@@ -384,7 +384,7 @@ class NeRFDataset:
                 ymax = min(self.W, cy + l)
 
                 self.lips_rect.append([xmin, xmax, ymin, ymax])
-        
+
         # load pre-extracted background image (should be the same size as training image...)
 
         if self.opt.bg_img == 'white': # special
@@ -408,7 +408,7 @@ class NeRFDataset:
         # smooth camera path...
         if self.opt.smooth_path:
             self.poses = smooth_camera_path(self.poses, self.opt.smooth_path_window)
-            
+
         self.poses = torch.from_numpy(self.poses) # [N, 4, 4]
 
         if self.preload > 0:
@@ -436,7 +436,7 @@ class NeRFDataset:
             # auds is novel, may have a different length with images
             else:
                 self.auds = aud_features
-        
+
         self.bg_img = torch.from_numpy(self.bg_img)
 
         if self.opt.exp_eye:
@@ -460,12 +460,12 @@ class NeRFDataset:
                     self.eye_area = torch.from_numpy(self.eye_area).view(-1, 4)  # [N, 7]
                 else:
                     self.eye_area = torch.from_numpy(self.eye_area).view(-1, 2)
-        
+
         # calculate mean radius of all camera poses
         self.radius = self.poses[:, :3, 3].norm(dim=-1).mean(0).item()
         #print(f'[INFO] dataset camera poses: radius = {self.radius:.4f}, bound = {self.bound}')
 
-        
+
         # [debug] uncomment to view all training poses.
         # visualize_poses(self.poses.numpy())
 
@@ -485,7 +485,7 @@ class NeRFDataset:
             if self.opt.portrait:
                 self.gt_images = self.gt_images.to(torch.half).to(self.device)
                 self.face_mask_imgs = self.face_mask_imgs.to(torch.half).to(self.device)
-            
+
             if self.opt.exp_eye:
                 self.eye_area = self.eye_area.to(self.device)
 
@@ -506,7 +506,7 @@ class NeRFDataset:
 
         cx = (transform['cx'] / downscale) if 'cx' in transform else (self.W / 2)
         cy = (transform['cy'] / downscale) if 'cy' in transform else (self.H / 2)
-    
+
         self.intrinsics = np.array([fl_x, fl_y, cx, cy])
 
         # directly build the coordinate meshgrid in [-1, 1]^2
@@ -539,7 +539,7 @@ class NeRFDataset:
         index[0] = self.mirror_index(index[0])
 
         poses = self.poses[index].to(self.device) # [B, 4, 4]
-        
+
         if self.training and self.opt.finetune_lips:
             rect = self.lips_rect[index[0]]
             results['rect'] = rect
@@ -559,7 +559,7 @@ class NeRFDataset:
             xmin, xmax, ymin, ymax = self.face_rect[index[0]]
             face_mask = (rays['j'] >= xmin) & (rays['j'] < xmax) & (rays['i'] >= ymin) & (rays['i'] < ymax) # [B, N]
             results['face_mask'] = face_mask
-            
+
             xmin, xmax, ymin, ymax = self.lhalf_rect[index[0]]
             lhalf_mask = (rays['j'] >= xmin) & (rays['j'] < xmax) & (rays['i'] >= ymin) & (rays['i'] < ymax) # [B, N]
             results['lhalf_mask'] = lhalf_mask
@@ -650,7 +650,7 @@ class NeRFDataset:
         # results['poses'] = convert_poses(poses) # [B, 6]
         # results['poses_matrix'] = poses # [B, 4, 4]
         results['poses'] = poses # [B, 4, 4]
-            
+
         return results
 
     def dataloader(self):
@@ -672,4 +672,4 @@ class NeRFDataset:
         # do evaluate if has gt images and use self-driven setting
         loader.has_gt = (self.opt.aud == '')
 
-        return loader        
+        return loader
