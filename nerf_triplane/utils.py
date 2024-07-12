@@ -1037,7 +1037,7 @@ class Trainer(object):
 
     def evaluate(self, loader, name=None, source_video=None):
         self.use_tensorboardX, use_tensorboardX = False, self.use_tensorboardX
-        self.evaluate_one_epoch(loader, name, source_video)
+        self.evaluate_one_epoch(loader=loader, name=name, source_video=source_video)
         self.use_tensorboardX = use_tensorboardX
 
     # Function to blend two images with a mask
