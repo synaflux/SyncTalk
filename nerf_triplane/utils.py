@@ -1029,7 +1029,7 @@ class Trainer(object):
                 self.save_checkpoint(full=True, best=False)
 
             if self.epoch % self.eval_interval == 0:
-                self.evaluate_one_epoch(valid_loader, None, source_video)
+                self.evaluate_one_epoch(loader=valid_loader, source_video=source_video)
                 self.save_checkpoint(full=False, best=True)
 
         if self.use_tensorboardX and self.local_rank == 0:
@@ -1404,6 +1404,7 @@ class Trainer(object):
 
     def evaluate_one_epoch(self, loader, name=None, source_video=None):
         self.log(f"++> Evaluate at epoch {self.epoch} ...")
+        self.log(f"[Debug] source_video: {source_video}, name {name}")
 
         if name is None:
             name = f'{self.name}_ep{self.epoch:04d}'
