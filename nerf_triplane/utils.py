@@ -1390,7 +1390,7 @@ class Trainer(object):
             result_frame_count = result['frames']
 
         frame_difference = source_frame_count - result_frame_count
-        seek = frame_difference / source_framerate
+        seek = frame_difference / source_framerate + (1 / source_framerate / 2)
         audio_path = os.path.join(validation_videos_path, f'{name}.wav')
         ground_truth_path = os.path.join(validation_videos_path, f'{name}_ground_truth.mp4')
 
