@@ -1394,11 +1394,14 @@ class Trainer(object):
         audio_path = os.path.join(validation_videos_path, f'{name}.wav')
         ground_truth_path = os.path.join(validation_videos_path, f'{name}_ground_truth.mp4')
 
+        self.log(f"Check ground truth at {ground_truth_path}")
         if not os.path.isfile(ground_truth_path):
             cmd = f'ffmpeg -i {source_video} -ss {seek} {ground_truth_path} -y'
             os.system(cmd)
 
             self.log(f"[INFO] saved truth to {ground_truth_path}")
+        else:
+            self.log(f"Ground truth found at {ground_truth_path}")
 
         cmd = f'ffmpeg -i {source_video} -ss {seek} -q:a 0 -map a {audio_path} -y'
         os.system(cmd)
