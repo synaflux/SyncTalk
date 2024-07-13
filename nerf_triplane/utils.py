@@ -1392,7 +1392,7 @@ class Trainer(object):
         frame_difference = source_frame_count - result_frame_count
         seek = frame_difference / source_framerate + (1 / source_framerate / 2)
         audio_path = os.path.join(validation_videos_path, f'{name}.wav')
-        ground_truth_path = os.path.join(validation_videos_path, f'{name}_ground_truth.mp4')
+        ground_truth_path = os.path.join(validation_videos_path, 'ground_truth.mp4')
 
         if not os.path.isfile(ground_truth_path):
             cmd = f'ffmpeg -i {source_video} -ss {seek} {ground_truth_path} -y'
