@@ -1394,14 +1394,11 @@ class Trainer(object):
         audio_path = os.path.join(validation_videos_path, f'{name}.wav')
         ground_truth_path = os.path.join(validation_videos_path, f'{name}_ground_truth.mp4')
 
-        self.log(f"Check ground truth at {ground_truth_path}")
         if not os.path.isfile(ground_truth_path):
             cmd = f'ffmpeg -i {source_video} -ss {seek} {ground_truth_path} -y'
             os.system(cmd)
 
-            self.log(f"[INFO] saved truth to {ground_truth_path}")
-        else:
-            self.log(f"Ground truth found at {ground_truth_path}")
+            print(f"[INFO] saved validation ground truth to {ground_truth_path}")
 
         cmd = f'ffmpeg -i {source_video} -ss {seek} -q:a 0 -map a {audio_path} -y'
         os.system(cmd)
@@ -1410,7 +1407,7 @@ class Trainer(object):
         cmd = f'ffmpeg -i {no_audio_video_path} -i {audio_path} -c:v copy -c:a aac -strict experimental {video_path} -y'
         os.system(cmd)
 
-        self.log(f"[INFO] saved result to {video_path}")
+        print(f"[INFO] saved result to {video_path}")
 
     def evaluate_one_epoch(self, loader, name=None, source_video=None):
         self.log(f"++> Evaluate at epoch {self.epoch} ...")
@@ -1558,7 +1555,7 @@ class Trainer(object):
 
 
             torch.save(state, file_path)
-            self.log(f"[INFO] saved checkpoint to {file_path}")
+            print(f"[INFO] saved checkpoint to {file_path}")
 
         else:    
             if len(self.stats["results"]) > 0:
@@ -1589,9 +1586,9 @@ class Trainer(object):
             checkpoint_list = sorted(glob.glob(f'{self.ckpt_path}/{self.name}_ep*.pth'))
             if checkpoint_list:
                 checkpoint = checkpoint_list[-1]
-                self.log(f"[INFO] Latest checkpoint is {checkpoint}")
+                print(f"[INFO] Latest checkpoint is {checkpoint}")
             else:
-                self.log("[WARN] No checkpoint found, model randomly initialized.")
+                print("[WARN] No checkpoint found, model randomly initialized.")
                 return
 
         checkpoint_dict = torch.load(checkpoint, map_location=self.device)
