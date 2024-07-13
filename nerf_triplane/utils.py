@@ -1357,7 +1357,6 @@ class Trainer(object):
         ]
 
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print(f'[get_video_details] Running command: {cmd}')
         out, err = process.communicate()
 
         if process.returncode == 0:
@@ -1384,7 +1383,6 @@ class Trainer(object):
         rgb_file_path = os.path.join(self.workspace, 'validation', f'{name}_%04d_rgb.png')
         no_audio_video_path = os.path.join(validation_videos_path, f'{name}_no_audio.mp4')
         cmd = f"ffmpeg -framerate {source_framerate} -i {rgb_file_path} {no_audio_video_path} -y"
-        print(f'[generate_validation_video1] Running command: {cmd}')
         os.system(cmd)
 
         result = self.get_video_details(no_audio_video_path)
@@ -1395,12 +1393,10 @@ class Trainer(object):
         seek = frame_difference / source_framerate
         audio_path = os.path.join(validation_videos_path, f'{name}.wav')
         cmd = f'ffmpeg -i {source_video} -ss {seek} -q:a 0 -map a {audio_path} -y'
-        print(f'[generate_validation_video2] Running command: {cmd}')
         os.system(cmd)
 
         video_path = os.path.join(validation_videos_path, f'{name}.mp4')
         cmd = f'ffmpeg -i {no_audio_video_path} -i {audio_path} -c:v copy -c:a aac -strict experimental {video_path} -y'
-        print(f'[generate_validation_video3] Running command: {cmd}')
         os.system(cmd)
 
         self.log(f"[INFO] saved result to {video_path}")
