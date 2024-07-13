@@ -1398,7 +1398,7 @@ class Trainer(object):
             cmd = f'ffmpeg -i {source_video} -ss {seek} {ground_truth_path} -y'
             os.system(cmd)
 
-            self.log(f"[INFO] saved validation ground truth to {ground_truth_path}")
+            self.log(f"[INFO] saved truth to {ground_truth_path}")
 
         cmd = f'ffmpeg -i {source_video} -ss {seek} -q:a 0 -map a {audio_path} -y'
         os.system(cmd)
