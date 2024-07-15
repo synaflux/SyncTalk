@@ -1403,7 +1403,7 @@ class Trainer(object):
         os.system(cmd)
 
         video_path = os.path.join(validation_videos_path, f'{name}.mp4')
-        cmd = f'ffmpeg -i {no_audio_video_path} -i {audio_path} -c:v copy -c:a aac -strict experimental {video_path} -y'
+        cmd = f'ffmpeg -i {no_audio_video_path} -i {audio_path} -c:v libx264 -c:a aac {video_path} -y'
         os.system(cmd)
 
         print(f"[INFO] saved result to {video_path}")
