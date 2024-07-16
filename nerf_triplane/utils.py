@@ -1,5 +1,6 @@
 import os
 import glob
+import subprocess
 import tqdm
 import random
 import tensorboardX
@@ -1011,7 +1012,7 @@ class Trainer(object):
 
     ### ------------------------------
 
-    def train(self, train_loader, valid_loader, max_epochs):
+    def train(self, train_loader, valid_loader, max_epochs, source_video=None):
         if self.use_tensorboardX and self.local_rank == 0:
             self.writer = tensorboardX.SummaryWriter(os.path.join(self.workspace, "run", self.name))
 
@@ -1028,15 +1029,15 @@ class Trainer(object):
                 self.save_checkpoint(full=True, best=False)
 
             if self.epoch % self.eval_interval == 0:
-                self.evaluate_one_epoch(valid_loader)
+                self.evaluate_one_epoch(valid_loader, None, source_video)
                 self.save_checkpoint(full=False, best=True)
 
         if self.use_tensorboardX and self.local_rank == 0:
             self.writer.close()
 
-    def evaluate(self, loader, name=None):
+    def evaluate(self, loader, name=None, source_video=None):
         self.use_tensorboardX, use_tensorboardX = False, self.use_tensorboardX
-        self.evaluate_one_epoch(loader, name)
+        self.evaluate_one_epoch(loader, name, source_video)
         self.use_tensorboardX = use_tensorboardX
 
     # Function to blend two images with a mask
@@ -1345,8 +1346,69 @@ class Trainer(object):
         self.log(f"loss={average_loss:.4f}")
         self.log(f"==> Finished Epoch {self.epoch}.")
 
+    def get_video_details(self, video_path):
+        cmd = [
+            'ffprobe',
+            '-v', '0',
+            '-of', 'csv=p=0',
+            '-select_streams', 'v:0',
+            '-show_entries', 'stream=r_frame_rate,nb_frames',
+            video_path
+        ]
 
-    def evaluate_one_epoch(self, loader, name=None):
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = process.communicate()
+
+        if process.returncode == 0:
+            output_lines = out.decode('utf-8').strip().split(',')
+            frame_rate_str = output_lines[0]
+            num, den = map(float, frame_rate_str.split('/'))
+            frame_rate = num / den
+            nb_frames = int(output_lines[1]) if output_lines[1].isdigit() else None
+            return {"frames": nb_frames, "framerate": frame_rate}
+        return None
+
+    def generate_validation_video(self, name, source_video=None):
+        validation_videos_path = os.path.join(self.workspace, 'validation_videos')
+
+        source_framerate = 25
+        source_frame_count = 0
+        result_frame_count = 0
+        if source_video:
+            result = self.get_video_details(source_video)
+            if result:
+                source_framerate = result['framerate']
+                source_frame_count = result['frames']
+
+        rgb_file_path = os.path.join(self.workspace, 'validation', f'{name}_%04d_rgb.png')
+        no_audio_video_path = os.path.join(validation_videos_path, f'{name}_no_audio.mp4')
+        cmd = f"ffmpeg -framerate {source_framerate} -i {rgb_file_path} {no_audio_video_path} -y"
+        os.system(cmd)
+
+        result = self.get_video_details(no_audio_video_path)
+        if result:
+            result_frame_count = result['frames']
+
+        frame_difference = source_frame_count - result_frame_count
+        seek = frame_difference / source_framerate + (1 / source_framerate / 2)
+        audio_path = os.path.join(validation_videos_path, f'{name}.wav')
+        ground_truth_path = os.path.join(validation_videos_path, 'ground_truth.mp4')
+
+        cmd = f'ffmpeg -i {source_video} -ss {seek} {ground_truth_path} -y'
+        os.system(cmd)
+
+        print(f"[INFO] saved validation ground truth to {ground_truth_path}")
+
+        cmd = f'ffmpeg -i {source_video} -ss {seek} -q:a 0 -map a {audio_path} -y'
+        os.system(cmd)
+
+        video_path = os.path.join(validation_videos_path, f'{name}.mp4')
+        cmd = f'ffmpeg -i {no_audio_video_path} -i {audio_path} -c:v copy -c:a aac -strict experimental {video_path} -y'
+        os.system(cmd)
+
+        print(f"[INFO] saved result to {video_path}")
+
+    def evaluate_one_epoch(self, loader, name=None, source_video=None):
         self.log(f"++> Evaluate at epoch {self.epoch} ...")
 
         if name is None:
@@ -1426,14 +1488,10 @@ class Trainer(object):
                     pbar.set_description(f"loss={loss_val:.4f} ({total_loss/self.local_step:.4f})")
                     pbar.update(loader.batch_size)
 
-        rgb_file_path = os.path.join(self.workspace, 'validation', f'{name}_%04d_rgb.png')
         validation_videos_path = os.path.join(self.workspace, 'validation_videos')
         os.makedirs(validation_videos_path, exist_ok=True)
-        video_path = os.path.join(validation_videos_path, f'{name}.mp4')
 
-        cmd = f"ffmpeg -framerate 25 -i {rgb_file_path} {video_path} -y"
-        os.system(cmd)
-        self.log(f"[INFO] saved result to {video_path}")
+        self.generate_validation_video(name, source_video)
 
         average_loss = total_loss / self.local_step
         self.stats["valid_loss"].append(average_loss)
@@ -1496,7 +1554,7 @@ class Trainer(object):
 
 
             torch.save(state, file_path)
-            self.log(f"[INFO] saved checkpoint to {file_path}")
+            print(f"[INFO] saved checkpoint to {file_path}")
 
         else:    
             if len(self.stats["results"]) > 0:
@@ -1527,9 +1585,9 @@ class Trainer(object):
             checkpoint_list = sorted(glob.glob(f'{self.ckpt_path}/{self.name}_ep*.pth'))
             if checkpoint_list:
                 checkpoint = checkpoint_list[-1]
-                self.log(f"[INFO] Latest checkpoint is {checkpoint}")
+                print(f"[INFO] Latest checkpoint is {checkpoint}")
             else:
-                self.log("[WARN] No checkpoint found, model randomly initialized.")
+                print("[WARN] No checkpoint found, model randomly initialized.")
                 return
 
         checkpoint_dict = torch.load(checkpoint, map_location=self.device)
