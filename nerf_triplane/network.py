@@ -185,7 +185,7 @@ class NeRFNetwork(NeRFRenderer):
 
         # audio network
         self.audio_dim = audio_dim
-        if self.opt.asr_model == 'ave':
+        if self.opt.asr_model == 'ave' or self.opt.asr_model == 'wav2lip_ave':
             self.audio_net = AudioNet_ave(self.audio_in_dim, self.audio_dim)
         else:
             self.audio_net = AudioNet(self.audio_in_dim, self.audio_dim)
