@@ -314,6 +314,8 @@ class NeRFNetwork(NeRFRenderer):
             a = self.embedding(a).transpose(-1, -2).contiguous() # [1/8, 29, 16]
 
         enc_a = self.audio_net(a) # [8,32]
+        if torch.isnan(enc_a).any():
+            raise Exception("NaN detected in audio outputs")
 
         if self.att > 0:
             enc_a = self.audio_att_net(enc_a.unsqueeze(0)) # [1, 32]
@@ -337,6 +339,8 @@ class NeRFNetwork(NeRFRenderer):
         # c: [1, ind_dim], individual code
         # e: [1, 1], eye feature
         enc_x = self.encode_x(x, bound=self.bound)
+        if torch.isnan(enc_x).any():
+            raise Exception("NaN detected in encode_x outputs 343")
 
         sigma_result = self.density(x, enc_a, e, enc_x)
         sigma = sigma_result['sigma']
@@ -365,6 +369,8 @@ class NeRFNetwork(NeRFRenderer):
         # x: [N, 3], in [-bound, bound]
         if enc_x is None:
             enc_x = self.encode_x(x, bound=self.bound)
+            if torch.isnan(enc_x).any():
+                raise Exception("NaN detected in encode_x outputs 373")
 
         enc_a = enc_a.repeat(enc_x.shape[0], 1)
         aud_ch_att = self.aud_ch_att_net(enc_x)
