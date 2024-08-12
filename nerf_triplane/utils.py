@@ -797,6 +797,9 @@ class Trainer(object):
         else:
             outputs = self.model.render_torso(rays_o, rays_d, auds, bg_coords, poses, eye=eye, index=index, staged=False, bg_color=bg_color, perturb=True, force_all_rays=False if (self.opt.patch_size <= 1 and not self.opt.train_camera) else True, **vars(self.opt))
 
+        if torch.isnan(outputs).any():
+            raise Exception("NaN detected in outputs")
+
         if not self.opt.torso:
             pred_rgb = outputs['image']
         else:
@@ -807,6 +810,9 @@ class Trainer(object):
         step_factor = min(self.global_step / self.opt.iters, 1.0)
         # MSE loss
         loss = self.criterion(pred_rgb, rgb).mean(-1) # [B, N, 3] --> [B, N]
+
+        if torch.isnan(loss):
+            raise Exception("NaN detected in loss 815")
 
         if self.opt.torso:
             loss = loss.mean()
@@ -857,6 +863,9 @@ class Trainer(object):
                 pred_rgb = torch.nn.functional.pad(pred_rgb, (padding_w, padding_w, padding_h, padding_h))
 
             loss = loss + 0.01 * self.criterion_lpips_alex(pred_rgb, rgb)
+            if torch.isnan(loss):
+                raise Exception("NaN detected in loss 867")
+
         # flip every step... if finetune lips
         if self.flip_finetune_lips:
             self.opt.finetune_lips = not self.opt.finetune_lips
@@ -881,6 +890,8 @@ class Trainer(object):
             alphas = outputs['weights_sum'].clamp(1e-5, 1 - 1e-5)
             loss_ws = - alphas * torch.log2(alphas) - (1 - alphas) * torch.log2(1 - alphas)
             loss = loss + 1e-4 * loss_ws.mean()
+            if torch.isnan(loss):
+                raise Exception("NaN detected in loss 894")
 
         # aud att loss (regions out of face should be static)
         if self.opt.amb_aud_loss and not self.opt.torso:
@@ -915,6 +926,10 @@ class Trainer(object):
                 reg_loss += self.criterion(ambient_eye_raw, ambient_eye_reg).mean()
             
             loss += reg_loss * lambda_reg
+
+        if torch.isnan(loss):
+            raise Exception("NaN detected in loss 913")
+
 
         return pred_rgb, rgb, loss
 
