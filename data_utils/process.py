@@ -54,7 +54,7 @@ def extract_semantics(ori_imgs_dir, parsing_dir):
     print(f'[INFO] ===== extracted semantics =====')
 
 
-def extract_landmarks(ori_imgs_dir):
+def extract_landmarks(ori_imgs_dir, return_bboxes=False):
 
     print(f'[INFO] ===== extract face landmarks from {ori_imgs_dir} =====')
     try:
@@ -65,10 +65,10 @@ def extract_landmarks(ori_imgs_dir):
     for image_path in tqdm.tqdm(image_paths):
         input = cv2.imread(image_path, cv2.IMREAD_UNCHANGED) # [H, W, 3]
         input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
-        preds = fa.get_landmarks(input)
+        preds = fa.get_landmarks(input, return_bboxes=return_bboxes)
         if len(preds) > 0:
             lands = preds[0].reshape(-1, 2)[:,:2]
-            np.savetxt(image_path.replace('jpg', 'lms'), lands, '%f')
+            np.savetxt(image_path.replace('jpg', 'lms' if return_bboxes is False else 'blms'), lands, '%f')
     del fa
     print(f'[INFO] ===== extracted face landmarks =====')
 
@@ -498,6 +498,10 @@ if __name__ == '__main__':
     # extract face landmarks
     if opt.task == -1 or opt.task == 6:
         extract_landmarks(ori_imgs_dir)
+
+    # extract face landmarks with bboxes
+    if opt.task == -1 or opt.task == 13:
+        extract_landmarks(ori_imgs_dir, True)
 
     # face tracking
     if opt.task == -1 or opt.task == 7:
