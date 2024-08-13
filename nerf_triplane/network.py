@@ -385,9 +385,11 @@ class NeRFNetwork(NeRFRenderer):
 
         # sigma = torch.exp(h[..., 0])
         # Applied fix to address loss=NaN issue caused by numerical instability in the exponential calculation.
-        # The fix clamps the input to a safe range (-9, 9) to prevent overflow in FP16.
-        # TODO: Adjust the -9, 9 clamp range dynamically for FP32 support
-        sigma = torch.exp(torch.clamp(h[..., 0], -9, 9))
+        # The fix clamps the input to a safe range to prevent overflow.
+        if self.opt.fp16 is True:
+            sigma = torch.exp(torch.clamp(h[..., 0], -9, 9))
+        else:
+            sigma = torch.exp(torch.clamp(h[..., 0], -50, 50))
 
         geo_feat = h[..., 1:]
 
