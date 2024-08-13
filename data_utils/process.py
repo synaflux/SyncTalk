@@ -75,11 +75,15 @@ def extract_landmarks(ori_imgs_dir):
 def extract_face_coordinates(ori_imgs_dir):
     
     print(f'[INFO] ===== extract face coordinates from {ori_imgs_dir} =====')
+    
     try:
         fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
     except:
         fa = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False)
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
+    
+    box = None
+    
     for image_path in tqdm.tqdm(image_paths):
         input = cv2.imread(image_path, cv2.IMREAD_UNCHANGED) # [H, W, 3]
         input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
@@ -98,6 +102,25 @@ def extract_face_coordinates(ori_imgs_dir):
                     max(box[3], face_coordinates[3])   # highest y2
                 ])
     del fa
+
+    # Calculate width and height
+    width = box[2] - box[0]
+    height = box[3] - box[1]
+
+    # Calculate padding (20% of width and height)
+    padding_width = 0.2 * width
+    padding_height = 0.2 * height
+
+    # Apply padding
+    padded_box = np.array([
+        box[0] - padding_width,
+        box[1] - padding_height,
+        box[2] + padding_width,
+        box[3] + padding_height
+    ])
+
+    np.savetxt(os.path.join(ori_imgs_dir, 'box.txt'), padded_box, '%f')
+
     print(f'[INFO] ===== extracted face coordinates =====')
 
 
