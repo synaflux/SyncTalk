@@ -88,7 +88,7 @@ def extract_face_coordinates(ori_imgs_dir):
         input = cv2.imread(image_path, cv2.IMREAD_UNCHANGED) # [H, W, 3]
         input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
         preds, score, detected_faces = fa.get_landmarks(input, return_bboxes=True)
-        if len(detected_faces) > 0:
+        if detected_faces is not None and len(detected_faces) > 0:
             face = detected_faces[0]
             np.savetxt(image_path.replace('jpg', 'box'), face, '%f')
             face_coordinates = face[:4]
