@@ -54,7 +54,7 @@ def extract_semantics(ori_imgs_dir, parsing_dir):
     print(f'[INFO] ===== extracted semantics =====')
 
 
-def extract_landmarks(ori_imgs_dir, return_bboxes=False):
+def extract_landmarks(ori_imgs_dir):
 
     print(f'[INFO] ===== extract face landmarks from {ori_imgs_dir} =====')
     try:
@@ -65,12 +65,40 @@ def extract_landmarks(ori_imgs_dir, return_bboxes=False):
     for image_path in tqdm.tqdm(image_paths):
         input = cv2.imread(image_path, cv2.IMREAD_UNCHANGED) # [H, W, 3]
         input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
-        preds = fa.get_landmarks(input, return_bboxes=return_bboxes)
+        preds = fa.get_landmarks(input)
         if len(preds) > 0:
             lands = preds[0].reshape(-1, 2)[:,:2]
-            np.savetxt(image_path.replace('jpg', 'lms' if return_bboxes is False else 'blms'), lands, '%f')
+            np.savetxt(image_path.replace('jpg', 'lms'), lands, '%f')
     del fa
     print(f'[INFO] ===== extracted face landmarks =====')
+
+def extract_face_coordinates(ori_imgs_dir):
+    
+    print(f'[INFO] ===== extract face coordinates from {ori_imgs_dir} =====')
+    try:
+        fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
+    except:
+        fa = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False)
+    image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
+    for image_path in tqdm.tqdm(image_paths):
+        input = cv2.imread(image_path, cv2.IMREAD_UNCHANGED) # [H, W, 3]
+        input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
+        preds, score, detected_faces = fa.get_landmarks(input, return_bboxes=True)
+        if len(detected_faces) > 0:
+            face = detected_faces[0]
+            np.savetxt(image_path.replace('jpg', 'box'), face, '%f')
+            face_coordinates = face[:4]
+            if box is None:
+                box = face_coordinates                
+            else:
+                box = np.array([
+                    min(box[0], face_coordinates[0]),  # lowest x1
+                    min(box[1], face_coordinates[1]),  # lowest y1
+                    max(box[2], face_coordinates[2]),  # highest x2
+                    max(box[3], face_coordinates[3])   # highest y2
+                ])
+    del fa
+    print(f'[INFO] ===== extracted face coordinates =====')
 
 
 def extract_background(base_dir, ori_imgs_dir):
@@ -501,7 +529,7 @@ if __name__ == '__main__':
 
     # extract face landmarks with bboxes
     if opt.task == -1 or opt.task == 13:
-        extract_landmarks(ori_imgs_dir, True)
+        extract_face_coordinates(ori_imgs_dir)
 
     # face tracking
     if opt.task == -1 or opt.task == 7:
