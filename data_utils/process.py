@@ -106,17 +106,19 @@ def extract_face_coordinates(ori_imgs_dir):
     # Calculate width and height
     width = box[2] - box[0]
     height = box[3] - box[1]
+    
+    # Determine the side length of the square
+    side_length = max(width, height)
 
-    # Calculate padding (20% of width and height)
-    padding_width = 0.2 * width
-    padding_height = 0.2 * height
-
+    # Calculate padding to make the box square and add 20% padding
+    padding = 0.2 * side_length
+    
     # Apply padding
     padded_box = np.array([
-        box[0] - padding_width,
-        box[1] - padding_height,
-        box[2] + padding_width,
-        box[3] + padding_height
+        box[0] - padding,
+        box[1] - padding,
+        box[2] + padding,
+        box[3] + padding
     ])
 
     np.savetxt(os.path.join(ori_imgs_dir, 'box.txt'), padded_box, '%f')
