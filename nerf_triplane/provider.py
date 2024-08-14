@@ -107,8 +107,10 @@ class NeRFDataset:
             transform_paths = glob.glob(os.path.join(self.root_path, '*.json'))
             transform = None
             for transform_path in transform_paths:
+                print('[INFO] load transform_path', transform_path)
                 with open(transform_path, 'r') as f:
                     tmp_transform = json.load(f)
+                    print('[INFO] load tmp_transform', tmp_transform)
                     if transform is None:
                         transform = tmp_transform
                     else:
@@ -127,6 +129,7 @@ class NeRFDataset:
             with open(os.path.join(self.root_path, f'transforms_{_split}.json'), 'r') as f:
                 transform = json.load(f)
 
+        print(f'[INFO] if h in transform and w in transform', transform)
         # load image size
         if 'h' in transform and 'w' in transform:
             self.H = int(transform['h']) // downscale
