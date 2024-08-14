@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('path', type=str)
-    parser.add_argument('-O', action='store_true', help="equals --fp16 --cuda_ray --exp_eye")
+    parser.add_argument('-O', action='store_true', help="equals --cuda_ray --exp_eye")
     parser.add_argument('--test', action='store_true', help="test mode (load model and test dataset)")
     parser.add_argument('--test_train', action='store_true', help="test mode (load model and train dataset)")
     parser.add_argument('--test_all', action='store_true', help="test mode (load model and all dataset)")
