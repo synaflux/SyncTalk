@@ -38,10 +38,10 @@ def extract_audio_features(path, mode='ave'):
     print(f'[INFO] ===== extracted audio labels =====')
 
 
-def extract_images(path, out_path, fps=25):
+def extract_images(path, out_path, fps=25, duration=None):
 
     print(f'[INFO] ===== extract images from {path} to {out_path} =====')
-    cmd = f'ffmpeg -i {path} -vf fps={fps} -qmin 1 -q:v 1 -start_number 0 {os.path.join(out_path, "%d.jpg")}'
+    cmd = f'ffmpeg -i {path} {f"-t {duration}" if duration is not None else ""} -vf fps={fps} -qmin 1 -q:v 1 -start_number 0 {os.path.join(out_path, "%d.jpg")}'
     run_cmd(cmd)
     print(f'[INFO] ===== extracted images =====')
 
@@ -511,6 +511,7 @@ if __name__ == '__main__':
     parser.add_argument('path', type=str, help="path to video file")
     parser.add_argument('--task', type=int, default=-1, help="-1 means all")
     parser.add_argument('--asr', type=str, default='ave', help="ave, hubert or deepspeech")
+    parser.add_argument('--extract-images-duration', type=int, help="the duration in seconds of the video to extract images from")
 
 
     opt = parser.parse_args()
@@ -543,7 +544,7 @@ if __name__ == '__main__':
 
     # extract images
     if opt.task == -1 or opt.task == 2:
-        extract_images(opt.path, ori_imgs_dir)
+        extract_images(opt.path, ori_imgs_dir, duration=opt.extract_images_duration)
 
     # face parsing
     if opt.task == -1 or opt.task == 3:
