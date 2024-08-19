@@ -436,9 +436,9 @@ def extract_flow(base_dir,ori_imgs_dir,mask_dir, flow_dir):
         str(h) + ' --img_w=' + str(w)
     run_cmd(pose_opt_cmd)
 
-def extract_blendshape(base_dir):
-    print(f'[INFO] ===== extract blendshape =====')
-    blendshape_cmd = 'python data_utils/blendshape_capture/main.py --path=' + base_dir
+def extract_blendshape(path):
+    print(f'[INFO] ===== extract blendshape from {path} =====')
+    blendshape_cmd = f'python data_utils/blendshape_capture/main.py --path={path}'
     run_cmd(blendshape_cmd)
 
 
@@ -580,7 +580,7 @@ if __name__ == '__main__':
 
     # extract blendshape
     if opt.task == -1 or opt.task == 9:
-        extract_blendshape(base_dir)
+        extract_blendshape(opt.path)
 
     # save transforms.json
     if opt.task == -1 or opt.task == 10:
