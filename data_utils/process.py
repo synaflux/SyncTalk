@@ -38,10 +38,10 @@ def extract_audio_features(path, mode='ave'):
     print(f'[INFO] ===== extracted audio labels =====')
 
 
-def extract_images(path, out_path, fps=25):
+def extract_images(path, out_path, fps=25, duration=None):
 
     print(f'[INFO] ===== extract images from {path} to {out_path} =====')
-    cmd = f'ffmpeg -i {path} -vf fps={fps} -qmin 1 -q:v 1 -start_number 0 {os.path.join(out_path, "%d.jpg")}'
+    cmd = f'ffmpeg -i {path} {f"-t {duration}" if duration is not None else ""} -vf fps={fps} -qmin 1 -q:v 1 -start_number 0 {os.path.join(out_path, "%d.jpg")}'
     run_cmd(cmd)
     print(f'[INFO] ===== extracted images =====')
 
@@ -71,6 +71,68 @@ def extract_landmarks(ori_imgs_dir):
             np.savetxt(image_path.replace('jpg', 'lms'), lands, '%f')
     del fa
     print(f'[INFO] ===== extracted face landmarks =====')
+
+def extract_face_coordinates(ori_imgs_dir):
+    
+    print(f'[INFO] ===== extract face coordinates from {ori_imgs_dir} =====')
+    
+    try:
+        fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
+    except:
+        fa = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False)
+    image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
+    
+    box = None
+    
+    for image_path in tqdm.tqdm(image_paths):
+        input = cv2.imread(image_path, cv2.IMREAD_UNCHANGED) # [H, W, 3]
+        input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
+        preds, score, detected_faces = fa.get_landmarks(input, return_bboxes=True)
+        if detected_faces is not None and len(detected_faces) > 0:
+            face = detected_faces[0]
+            np.savetxt(image_path.replace('jpg', 'box'), face, '%f')
+            face_coordinates = face[:4]
+            if box is None:
+                box = face_coordinates                
+            else:
+                box = np.array([
+                    min(box[0], face_coordinates[0]),  # lowest x1
+                    min(box[1], face_coordinates[1]),  # lowest y1
+                    max(box[2], face_coordinates[2]),  # highest x2
+                    max(box[3], face_coordinates[3])   # highest y2
+                ])
+    del fa
+
+    # Calculate width and height
+    width = box[2] - box[0]
+    height = box[3] - box[1]
+    
+    # Determine the side length of the square
+    side_length = max(width, height)
+
+    padding_percent = 0.2
+
+    while True:
+        # Calculate padding to make the box square and add 20% padding
+        padding_width = (side_length - width) / 2 + padding_percent * side_length
+        padding_height = (side_length - height) / 2 + padding_percent * side_length
+        
+        # Apply padding
+        padded_box = np.array([
+            box[0] - padding_width,
+            box[1] - padding_height,
+            box[2] + padding_width,
+            box[3] + padding_height
+        ])
+        
+        if all(item > 0 for item in padded_box):
+            break
+        else:
+            padding_percent -= 0.01
+
+    np.savetxt(os.path.join(ori_imgs_dir, 'box.txt'), padded_box, '%f')
+
+    print(f'[INFO] ===== extracted face coordinates =====')
 
 
 def extract_background(base_dir, ori_imgs_dir):
@@ -374,9 +436,9 @@ def extract_flow(base_dir,ori_imgs_dir,mask_dir, flow_dir):
         str(h) + ' --img_w=' + str(w)
     run_cmd(pose_opt_cmd)
 
-def extract_blendshape(base_dir):
-    print(f'[INFO] ===== extract blendshape =====')
-    blendshape_cmd = 'python data_utils/blendshape_capture/main.py --path=' + base_dir
+def extract_blendshape(path):
+    print(f'[INFO] ===== extract blendshape from {path} =====')
+    blendshape_cmd = f'python data_utils/blendshape_capture/main.py --path={path}'
     run_cmd(blendshape_cmd)
 
 
@@ -449,6 +511,7 @@ if __name__ == '__main__':
     parser.add_argument('path', type=str, help="path to video file")
     parser.add_argument('--task', type=int, default=-1, help="-1 means all")
     parser.add_argument('--asr', type=str, default='ave', help="ave, hubert or deepspeech")
+    parser.add_argument('--extract-images-duration', type=int, help="the duration in seconds of the video to extract images from")
 
 
     opt = parser.parse_args()
@@ -481,7 +544,7 @@ if __name__ == '__main__':
 
     # extract images
     if opt.task == -1 or opt.task == 2:
-        extract_images(opt.path, ori_imgs_dir)
+        extract_images(opt.path, ori_imgs_dir, duration=opt.extract_images_duration)
 
     # face parsing
     if opt.task == -1 or opt.task == 3:
@@ -499,6 +562,10 @@ if __name__ == '__main__':
     if opt.task == -1 or opt.task == 6:
         extract_landmarks(ori_imgs_dir)
 
+    # extract face landmarks with bboxes
+    if opt.task == -1 or opt.task == 13:
+        extract_face_coordinates(ori_imgs_dir)
+
     # face tracking
     if opt.task == -1 or opt.task == 7:
         face_tracking(ori_imgs_dir)
@@ -513,7 +580,7 @@ if __name__ == '__main__':
 
     # extract blendshape
     if opt.task == -1 or opt.task == 9:
-        extract_blendshape(base_dir)
+        extract_blendshape(opt.path)
 
     # save transforms.json
     if opt.task == -1 or opt.task == 10:
