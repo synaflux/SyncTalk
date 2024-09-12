@@ -105,11 +105,11 @@ if __name__ == '__main__':
 
     # asr
     parser.add_argument('--asr', action='store_true', help="load asr for real-time app")
-    parser.add_argument('--ave_ckpt', action='store_true', help="The name of the audio-visual encoder checkpoint")
     parser.add_argument('--asr_wav', type=str, default='', help="load the wav and use as input")
     parser.add_argument('--asr_play', action='store_true', help="play out the audio")
 
     parser.add_argument('--asr_model', type=str, default='deepspeech')
+    parser.add_argument('--ave_ckpt', type=str, default='', help="The name of the audio-visual encoder checkpoint")
 
     parser.add_argument('--asr_save_feats', action='store_true')
     # audio FPS
