@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser.add_argument('--emb', action='store_true', help="use audio class + embedding instead of logits")
     parser.add_argument('--portrait', action='store_true', help="only render face")
     parser.add_argument('--ind_dim', type=int, default=4, help="individual code dim, 0 to turn off")
-    parser.add_argument('--ind_num', type=int, default=20000, help="number of individual codes, should be larger than training dataset size")
+    parser.add_argument('--ind_num', type=int, default=50000, help="number of individual codes, should be larger than training dataset size")
 
     parser.add_argument('--ind_dim_torso', type=int, default=8, help="individual code dim, 0 to turn off")
 
