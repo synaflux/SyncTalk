@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser.add_argument('--emb', action='store_true', help="use audio class + embedding instead of logits")
     parser.add_argument('--portrait', action='store_true', help="only render face")
     parser.add_argument('--ind_dim', type=int, default=4, help="individual code dim, 0 to turn off")
-    parser.add_argument('--ind_num', type=int, default=20000, help="number of individual codes, should be larger than training dataset size")
+    parser.add_argument('--ind_num', type=int, default=50000, help="number of individual codes, should be larger than training dataset size")
 
     parser.add_argument('--ind_dim_torso', type=int, default=8, help="individual code dim, 0 to turn off")
 
@@ -105,11 +105,11 @@ if __name__ == '__main__':
 
     # asr
     parser.add_argument('--asr', action='store_true', help="load asr for real-time app")
-    # parser.add_argument('--ave_ckpt', action='store_true', help="The name of the audio-visual encoder checkpoint")
     parser.add_argument('--asr_wav', type=str, default='', help="load the wav and use as input")
     parser.add_argument('--asr_play', action='store_true', help="play out the audio")
 
     parser.add_argument('--asr_model', type=str, default='deepspeech')
+    parser.add_argument('--ave_ckpt', type=str, default='', help="The name of the audio-visual encoder checkpoint")
 
     parser.add_argument('--asr_save_feats', action='store_true')
     # audio FPS

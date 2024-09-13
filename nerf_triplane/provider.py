@@ -168,10 +168,11 @@ class NeRFDataset:
                 #     aud_features = np.load(os.path.join(self.root_path, 'aud_hu_cn.npy'))
                 elif 'hubert' in self.opt.asr_model:
                     aud_features = np.load(os.path.join(self.root_path, 'aud_hu.npy'))
-                elif self.opt.asr_model == 'ave' or self.opt.asr_model == 'wav2lip_ave':
+                elif self.opt.asr_model == 'ave':
                     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
                     model = AudioEncoder().to(device).eval()
-                    ave_ckpt = "audio_visual_encoder.pth" if  self.opt.asr_model == 'ave' else "wav2lip_ave.pth"
+                    ave_ckpt = self.opt.ave_ckpt or "audio_visual_encoder.pth"
+                    print(f'AVE checkpoint: {ave_ckpt}')
                     ckpt = torch.load(f'./nerf_triplane/checkpoints/{ave_ckpt}')
                     model.load_state_dict({f'audio_encoder.{k}': v for k, v in ckpt.items()})
                     dataset = AudDataset(os.path.join(self.root_path, 'aud.wav'))
@@ -191,10 +192,11 @@ class NeRFDataset:
                     aud_features = np.load(os.path.join(self.root_path, 'aud.npy'))
             # cross-driven extracted features.
             else:
-                if self.opt.asr_model == 'ave' or self.opt.asr_model == 'wav2lip_ave':
+                if self.opt.asr_model == 'ave':
                     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
                     model = AudioEncoder().to(device).eval()
-                    ave_ckpt =  "audio_visual_encoder.pth" if self.opt.asr_model == 'ave' else "wav2lip_ave.pth"
+                    ave_ckpt = self.opt.ave_ckpt or "audio_visual_encoder.pth"
+                    print(f'AVE checkpoint: {ave_ckpt}')
                     ckpt = torch.load(f'./nerf_triplane/checkpoints/{ave_ckpt}')
                     model.load_state_dict({f'audio_encoder.{k}': v for k, v in ckpt.items()})
                     dataset = AudDataset(self.opt.aud)
@@ -218,7 +220,7 @@ class NeRFDataset:
                         raise Exception("Invalid asr_model")
                     aud_features = np.load(aud_features_file)
 
-            if self.opt.asr_model == 'ave' or self.opt.asr_model == 'wav2lip_ave':
+            if self.opt.asr_model == 'ave':
                 aud_features = torch.from_numpy(aud_features).unsqueeze(0)
 
                 # support both [N, 16] labels and [N, 16, K] logits
