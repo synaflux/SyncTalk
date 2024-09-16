@@ -153,13 +153,16 @@ if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    if opt.force_latest_checkpoint_ind_num == True:
+    if opt.force_latest_checkpoint_ind_num:
+        checkpoint = None
+        
         checkpoint_list = sorted(glob.glob(f'{opt.workspace}/checkpoints/ngp_ep*.pth'))
         if checkpoint_list:
             checkpoint = checkpoint_list[-1]
         
-        model_dict = torch.load(checkpoint, map_location='cpu')['model']
-        opt.ind_num = model_dict['individual_codes'].size(dim=0)
+        if checkpoint:
+            model_dict = torch.load(checkpoint, map_location='cpu')['model']
+            opt.ind_num = model_dict['individual_codes'].size(dim=0)
         
 
     model = NeRFNetwork(opt)
