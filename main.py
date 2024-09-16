@@ -123,6 +123,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--output_name', type=str)
 
+    parser.add_argument('--force_latest_checkpoint_ind_num', action='store_true', help="force loading ind_num from the latest checkpoint")
+
     opt = parser.parse_args()
 
     if opt.O:
@@ -150,6 +152,18 @@ if __name__ == '__main__':
     seed_everything(opt.seed)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    if opt.force_latest_checkpoint_ind_num:
+        checkpoint = None
+        
+        checkpoint_list = sorted(glob.glob(f'{opt.workspace}/checkpoints/ngp_ep*.pth'))
+        if checkpoint_list:
+            checkpoint = checkpoint_list[-1]
+        
+        if checkpoint:
+            model_dict = torch.load(checkpoint, map_location='cpu')['model']
+            opt.ind_num = model_dict['individual_codes'].size(dim=0)
+        
 
     model = NeRFNetwork(opt)
 
