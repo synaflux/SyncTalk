@@ -442,7 +442,7 @@ def extract_blendshape(path):
     run_cmd(blendshape_cmd)
 
 
-def save_transforms(base_dir, ori_imgs_dir):
+def save_transforms(base_dir, ori_imgs_dir, skip_bundle_adjustment=False):
     print(f'[INFO] ===== save transforms =====')
 
     image_paths = glob.glob(os.path.join(ori_imgs_dir, '*.jpg'))
@@ -451,7 +451,11 @@ def save_transforms(base_dir, ori_imgs_dir):
     tmp_image = cv2.imread(image_paths[0], cv2.IMREAD_UNCHANGED) # [H, W, 3]
     h, w = tmp_image.shape[:2]
 
-    params_dict = torch.load(os.path.join(base_dir, 'bundle_adjustment.pt'))
+    if skip_bundle_adjustment is True:
+        params_dict = torch.load(os.path.join(base_dir, 'track_params.pt'))
+    else:
+        params_dict = torch.load(os.path.join(base_dir, 'bundle_adjustment.pt'))
+
     focal_len = params_dict['focal']
     euler_angle = params_dict['euler']
     trans = params_dict['trans']
@@ -512,7 +516,7 @@ if __name__ == '__main__':
     parser.add_argument('--task', type=int, default=-1, help="-1 means all")
     parser.add_argument('--asr', type=str, default='ave', help="ave, hubert or deepspeech")
     parser.add_argument('--extract-images-duration', type=int, help="the duration in seconds of the video to extract images from")
-
+    parser.add_argument('--skip_bundle_adjustment', action='store_true', help="skip bundle adjustment")
 
     opt = parser.parse_args()
 
@@ -584,5 +588,5 @@ if __name__ == '__main__':
 
     # save transforms.json
     if opt.task == -1 or opt.task == 10:
-        save_transforms(base_dir, ori_imgs_dir)
+        save_transforms(base_dir, ori_imgs_dir, opt.skip_bundle_adjustment)
 

@@ -284,6 +284,7 @@ class NeRFDataset:
         self.eye_area = []
         self.eye_rect = []
 
+        print(f'[INFO] Loading {type} data: 0/{len(frames)}')
         for f in tqdm.tqdm(frames, desc=f'Loading {type} data'):
 
             f_path = os.path.join(self.root_path, 'gt_imgs', str(f['img_id']) + '.jpg')
